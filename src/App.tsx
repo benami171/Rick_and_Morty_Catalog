@@ -1,13 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.module.scss'
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import './App.module.scss'
+import Filter from "./components/Filter/Filter";
+import CharactersCards from "./components/CharactersCards/CharactersCards";
+import { useEffect, useState } from "react";
+// this is going to be a rick and morty character catalog app
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [characters, setCharacters] = useState([]);
+  const [page, setPage] = useState(1);
+  const api = (`https://rickandmortyapi.com/api/character/?page=${page}`);
+
+  // fetch the data from the api while handling fetching errors
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(api);
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setCharacters(data.results);
+      } catch (error) {
+        console.error("There was a problem with the fetch operation:", error);
+      }
+    };
+
+    fetchData();
+  }, [api]);
+
+
 
   return (
-      <div> </div>
+    <div className="">
+      <h1 className="text-center mt-2 mb-2">My
+        <span className="text-primary"> Rick & Morty </span>
+        Character Catalog
+      </h1>
+
+      <div className="container">
+        <div className="row">
+          <div className="col-3">
+          <Filter />
+          </div>
+          <div className="col-8">
+            <div className="row">
+              <CharactersCards /> 
+              <CharactersCards />
+              <CharactersCards />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
