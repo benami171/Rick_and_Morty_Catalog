@@ -1,4 +1,6 @@
-import React from 'react'
+import styles from './CharactersCards.module.scss'
+
+
 
 interface Character {
     id: number;
@@ -28,18 +30,22 @@ const CharactersCards = ({ characters = [] }: { characters: Character[] }) => {
     if (characters) {
         display = characters.map(character => {
             return (
-                <div className="col-4" key={character.id}>
-                    <img src={character.image} className="" alt={character.name} />
-                    <div>
-                        <h5 className="">{character.name}</h5>
-                        <p className="text-sm">Status: {character.status}</p>
-                        <p className="text-sm">Last Known: {character.location.name}</p>
+                <div className={"col-3 position-relative"} key={character.id}>
+                    <div className={styles.card}>
+                        <img src={character.image} className="img-fluid" alt={character.name} />
+                        <div className="content">
+                            <h5 className="fs-4 mb-4">{character.name}</h5>
+                            <div>
+                                <p className="fs-6">Last Known: {character.location.name}</p>
+                                <p className={`${styles.badge} position-absolute badge bg-danger`}> {character.status}</p>
+                            </div>
+                        </div>
                     </div>
                 </div >
             );
         });
     } else {
-        display = <div className="card">No characters found</div>
+        display = <div className="">No characters found</div>
     }
 
     return (

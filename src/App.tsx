@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 function App() {
 
   const [characters, setCharacters] = useState([]);
-  const [page, setPage] = useState(2);
+  const [page, setPage] = useState(1);
   const api = (`https://rickandmortyapi.com/api/character/?page=${page}`);
   const [info, setInfo] = useState(null); // to store pagination info
 
@@ -37,7 +37,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1 className="text-center mt-2 mb-2">My
+      <h1 className="text-left mt-2 mb-2">My
         <span className="text-primary"> Rick & Morty </span>
         Character Catalog
       </h1>
