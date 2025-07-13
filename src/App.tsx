@@ -9,11 +9,12 @@ import { useEffect, useState } from "react";
 function App() {
 
   const [characters, setCharacters] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(2);
   const api = (`https://rickandmortyapi.com/api/character/?page=${page}`);
+  const [info, setInfo] = useState(null); // to store pagination info
 
+  
   // fetch the data from the api while handling fetching errors
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -23,6 +24,7 @@ function App() {
         }
         const data = await response.json();
         setCharacters(data.results);
+        setInfo(data.info); // Store pagination info
       } catch (error) {
         console.error("There was a problem with the fetch operation:", error);
       }
@@ -34,7 +36,7 @@ function App() {
 
 
   return (
-    <div className="">
+    <div className="App">
       <h1 className="text-center mt-2 mb-2">My
         <span className="text-primary"> Rick & Morty </span>
         Character Catalog
@@ -47,9 +49,7 @@ function App() {
           </div>
           <div className="col-8">
             <div className="row">
-              <CharactersCards /> 
-              <CharactersCards />
-              <CharactersCards />
+              <CharactersCards characters={characters} />
             </div>
           </div>
         </div>
