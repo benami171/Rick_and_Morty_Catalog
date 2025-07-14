@@ -30,9 +30,9 @@ const CharactersCards = ({ characters }: { characters: Character[] }) => {
                     >
                     <img src={character.image} className={`${styles.img} img-fluid`} alt={character.name} />
                         <div className="content">
-                            <h5 className="fs-4 mb-4">{character.name}</h5>
+                            <h5 className="fs-4 mb-2">{character.name}</h5>
                             <div>
-                                <div className="fs-6 mx-1">Last Known: {character.location.name}</div>
+                                <div className="fs-6 mx-1">Last Known location: {character.location.name}</div>
                                 <div className={`${styles.badge} position-absolute badge ${badgeColor}`}> {character.status}</div>
                             </div>
                         </div>
