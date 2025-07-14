@@ -158,9 +158,8 @@ class CharactersStore {
 
       const data: ApiResponse = await response.json();
 
-        // Run in action to modify observable state
-        // if we wont use runInAction, MobX won't know about the changes
-        // and won't trigger re-renders
+
+        // run in action batches the states changes so each change wont cause a re-render
         runInAction(() => {
         // Cache the characters
         this.cacheCharacters(data.results);
@@ -169,6 +168,8 @@ class CharactersStore {
         // Update pagination info
         this.apiInfo = data.info;
         this.currentPage = 1;
+
+        // now only ONE re-render will happen here.
       });
 
     } catch (error) {
