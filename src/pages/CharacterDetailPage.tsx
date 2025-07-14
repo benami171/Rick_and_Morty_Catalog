@@ -5,9 +5,9 @@ import { useCharactersStore } from '../stores/StoreContext';
 import { type Character } from "../stores/CharacterStores";
 
 const CharacterDetailPage = observer(() => {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
-    const charactersStore = useCharactersStore();
+    const { id } = useParams<{ id: string }>();         // Get character ID from URL params
+    const navigate = useNavigate();                     // i will use it to navigate back to the catalog.
+    const charactersStore = useCharactersStore();       // use the store to access global states and methods and to subscribe to changes.
     
     const [character, setCharacter] = useState<Character | null>(null);
     const [loading, setLoading] = useState(true);

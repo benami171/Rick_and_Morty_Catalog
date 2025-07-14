@@ -7,7 +7,8 @@ import { useCharactersStore } from '../stores/StoreContext';
 import Filter from "../components/Filter/Filter";
 import CharactersCards from "../components/CharactersCards/CharactersCards";
 
-// Characters list page component
+// i use observer to wrap the component 
+// so that it can react to changes in the MobX store and re-render.
 const CharactersPage = observer(() => {
 
     // this hook gives us access to the characters store
@@ -48,7 +49,6 @@ const CharactersPage = observer(() => {
                             </div>
                         )}
 
-                        {/* Characters grid */}
                         <div className="row">
                             <CharactersCards characters={charactersStore.displayCharacters} />
                         </div>
@@ -71,7 +71,7 @@ const CharactersPage = observer(() => {
                                 <div className="col-12 text-center">
                                     {charactersStore.hasNextPage && (
                                         <button
-                                            className="btn btn-primary btn-lg"
+                                            className="btn btn-info btn-lg mb-3"
                                             onClick={() => charactersStore.loadMoreCharacters()}
                                             disabled={charactersStore.loadingMore}
                                         >
@@ -81,7 +81,9 @@ const CharactersPage = observer(() => {
                                                     Loading...
                                                 </>
                                             ) : (
-                                                "Load More Characters"
+                                                
+                                                    "Load More Characters"
+
                                             )}
                                         </button>
                                     )}

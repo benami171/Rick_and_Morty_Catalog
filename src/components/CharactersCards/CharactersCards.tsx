@@ -28,12 +28,12 @@ const CharactersCards = ({ characters }: { characters: Character[] }) => {
                         onClick={() => navigate(`/character/${character.id}`)}
                         style={{ cursor: 'pointer' }}
                     >
-                        <img src={character.image} className="img-fluid" alt={character.name} />
-                        <div className="">
+                    <img src={character.image} className={`${styles.img} img-fluid`} alt={character.name} />
+                        <div className="content">
                             <h5 className="fs-4 mb-4">{character.name}</h5>
                             <div>
-                                <p className="fs-6">Last Known: {character.location.name}</p>
-                                <p className={`${styles.badge} position-absolute badge ${badgeColor}`}> {character.status}</p>
+                                <div className="fs-6 mx-1">Last Known: {character.location.name}</div>
+                                <div className={`${styles.badge} position-absolute badge ${badgeColor}`}> {character.status}</div>
                             </div>
                         </div>
                     </div>

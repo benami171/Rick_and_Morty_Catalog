@@ -1,9 +1,21 @@
 .badge {
     top: 10px;
     right: 20px;
-    font-size: 20px;
+    font-size: 15px;
+}
+
+.img {
+
+    border-radius: 10px;
 }
 
 .card {
-    border: 1px solid #5d1b9f;
+    border: 2px solid #5d1b9f;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
