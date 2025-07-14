@@ -93,6 +93,14 @@ class CharactersStore {
         return this.apiInfo?.pages || 0;
     }
 
+    get hasNoResults(): boolean {
+        return !this.loading && !this.error && this.charactersList.length === 0 && this.apiInfo !== null;
+    }
+
+    get hasActiveFilters(): boolean {
+        return !!(this.filters.name || this.filters.status || this.filters.species || this.filters.gender);
+    }
+
     // ===== PRIVATE HELPERS =====
     private buildApiUrl(page: number = INITIAL_PAGE): string {
         const params = new URLSearchParams();
@@ -176,7 +184,19 @@ class CharactersStore {
         try {
             const response = await this.fetchWithRetry(this.buildApiUrl(INITIAL_PAGE));
 
-            if (!response.ok) { // Handle non-200 responses
+            if (!response.ok) {
+                // Handle 404 specifically for "no results found"
+                if (response.status === 404) {
+                    runInAction(() => {
+                        this.charactersList = [];
+                        this.apiInfo = { count: 0, pages: 0, next: null, prev: null };
+                        this.currentPage = INITIAL_PAGE;
+                        // Don't set error for no results - just empty state
+                    });
+                    return;
+                }
+                
+                // Handle other HTTP errors
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
@@ -212,6 +232,17 @@ class CharactersStore {
             const response = await this.fetchWithRetry(this.buildApiUrl(nextPage));
 
             if (!response.ok) {
+                // Handle 404 for no more results
+                if (response.status === 404) {
+                    runInAction(() => {
+                        // Mark as no more pages available
+                        if (this.apiInfo) {
+                            this.apiInfo.next = null;
+                        }
+                    });
+                    return;
+                }
+                
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 

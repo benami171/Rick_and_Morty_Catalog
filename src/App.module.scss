@@ -3,5 +3,250 @@
   padding: 1rem;
 }
 
+// Enhanced background styling for Rick & Morty app
 
+// Global background for the entire app
+:global(body) {
+    background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    
+    // Animated background effect
+    &::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 20%, rgba(93, 27, 159, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
+    }
+}
 
+// Main container styling
+.CharactersPage {
+    min-height: 100vh;
+    position: relative;
+    padding: 20px 0;
+    
+    // // Subtle animated particles effect
+    // &::before {
+    //     content: '';
+    //     position: absolute;
+    //     top: 0;
+    //     left: 0;
+    //     width: 100%;
+    //     height: 100%;
+    //     background-image: 
+    //         radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.1), transparent),
+    //         radial-gradient(2px 2px at 40px 70px, rgba(93, 27, 159, 0.2), transparent),
+    //         radial-gradient(1px 1px at 90px 40px, rgba(0, 212, 255, 0.1), transparent);
+    //     background-repeat: repeat;
+    //     background-size: 100px 100px;
+    //     animation: particles 20s linear infinite;
+    //     pointer-events: none;
+    //     z-index: -1;
+    // }
+}
+
+@keyframes particles {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-100px);
+    }
+}
+
+// Enhanced title styling
+.title {
+    color: #00d4ff;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    margin-bottom: 20px;
+    
+    .brandName {
+        background: linear-gradient(135deg, #00d4ff, #5d1b9f);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: bold;
+        text-shadow: none;
+    }
+}
+
+// Filter panel styling
+.filterPanel {
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid rgba(93, 27, 159, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    h2 {
+        color: #00ff88;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        margin-bottom: 15px;
+    }
+    
+    .form-select, .form-control {
+        background: rgba(22, 33, 62, 0.8);
+        border: 1px solid rgba(93, 27, 159, 0.5);
+        color: #ffffff;
+        
+        &:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+            background: rgba(22, 33, 62, 0.9);
+        }
+        
+        option {
+            background: #16213e;
+            color: #ffffff;
+        }
+    }
+    
+    .btn {
+        background: linear-gradient(135deg, #5d1b9f, #7c3aed);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(93, 27, 159, 0.4);
+        }
+    }
+}
+
+// Character count styling
+.characterCount {
+    color: #b0b0b0;
+    font-style: italic;
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    text-align: center;
+}
+
+// Load more button styling
+.loadMoreSection {
+    margin-top: 30px;
+    text-align: center;
+    
+    .btn {
+        background: linear-gradient(135deg, #00d4ff, #5d1b9f);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        
+        &:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
+}
+
+// Error alert styling
+.errorAlert {
+    background: rgba(204, 0, 0, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.5);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    
+    .alert-heading {
+        color: #ff4444;
+        text-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+    }
+}
+
+// Loading spinner enhancements
+.loadingSpinner {
+    .spinner-border {
+        color: #00d4ff;
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    p {
+        color: #b0b0b0;
+        margin-top: 15px;
+        font-size: 1.1rem;
+    }
+}
+
+// No results styling
+.noResults {
+    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    margin: 2rem 0;
+    
+    h3 {
+        color: #ffffff;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    
+    .btn {
+        background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+        border: none;
+        color: #1a1a2e;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+            color: #1a1a2e;
+        }
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    .CharactersPage {
+        padding: 10px 0;
+    }
+    
+    .filterPanel {
+        margin-bottom: 20px;
+    }
+    
+    .title {
+        text-align: center;
+        
+        .brandName {
+            font-size: 1.5rem;
+        }
+    }
+}
+  
