@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCharactersStore } from '../../stores/StoreContext';
-import styles from './Filter.module.scss';
 
 const Filter = observer(() => {
     const charactersStore = useCharactersStore();
@@ -46,7 +45,7 @@ const Filter = observer(() => {
     };
 
     return (
-        <div className={styles.filterSection}>
+        <div className={"p-3 border rounded bg-light"}>
             <h5 className="mb-3">Search & Filters</h5>
             
             {/* Search Bar */}

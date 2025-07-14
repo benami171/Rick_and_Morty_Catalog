@@ -24,7 +24,7 @@ const CharactersCards = ({ characters }: { characters: Character[] }) => {
             return (
                 <div className={"col-3 position-relative mb-3"} key={character.id}>
                     <div
-                        className={`${styles.card}`}
+                        className={styles.card}
                         onClick={() => navigate(`/character/${character.id}`)}
                         style={{ cursor: 'pointer' }}
                     >

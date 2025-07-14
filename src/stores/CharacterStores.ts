@@ -1,7 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 
 // ===== TYPE DEFINITIONS =====
-
 export interface Character {
     id: number;
     name: string;
@@ -48,6 +47,14 @@ interface CharacterFilters {
 const BASE_API_URL = 'https://rickandmortyapi.com/api/character/';
 const INITIAL_PAGE = 1;
 
+// Rate limiting retry configuration
+const RETRY_CONFIG = {
+    MAX_ATTEMPTS: 3,
+    INITIAL_DELAY: 1000, // 1 second
+    BACKOFF_MULTIPLIER: 2, // exponential backoff: 1s, 2s, 4s
+    MAX_DELAY: 10000, // 10 seconds max
+};
+
 // ===== CHARACTERS STORE =====
 
 class CharactersStore {
@@ -60,6 +67,8 @@ class CharactersStore {
     loadingMore = false;
     error: string | null = null;
     filters: CharacterFilters = {};
+
+
 
     constructor() {
         makeAutoObservable(this);
@@ -99,6 +108,36 @@ class CharactersStore {
         return paramString ? `${baseUrl}&${paramString}` : baseUrl;
     }
 
+    private async fetchWithRetry(url: string, attempt = 1): Promise<Response> {
+        try {
+            const response = await fetch(url);
+
+            // Handle rate limiting (429) with retry logic
+            if (response.status === 429) {
+                if (attempt >= RETRY_CONFIG.MAX_ATTEMPTS) {
+                    throw new Error(`Rate limit exceeded. Please try again later.`);
+                }
+
+                // Calculate delay with exponential backoff
+                const baseDelay = RETRY_CONFIG.INITIAL_DELAY * Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, attempt - 1);
+                const delay = Math.min(baseDelay, RETRY_CONFIG.MAX_DELAY);
+
+                // Try to get Retry-After header if provided by API
+                const retryAfter = response.headers.get('Retry-After');
+                const finalDelay = retryAfter ? parseInt(retryAfter) * 1000 : delay;
+
+                console.warn(`Rate limited (429). Retrying in ${finalDelay}ms (attempt ${attempt}/${RETRY_CONFIG.MAX_ATTEMPTS})`);
+                
+                await new Promise(resolve => setTimeout(resolve, finalDelay));
+                return this.fetchWithRetry(url, attempt + 1);
+            }
+
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+
     private cacheCharacters(characters: Character[]): void {
         characters.forEach(character => {
             this.characters.set(character.id, character);
@@ -135,9 +174,9 @@ class CharactersStore {
         this.setError(null);
 
         try {
-            const response = await fetch(this.buildApiUrl(INITIAL_PAGE));
+            const response = await this.fetchWithRetry(this.buildApiUrl(INITIAL_PAGE));
 
-            if (!response.ok) {
+            if (!response.ok) { // Handle non-200 responses
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
@@ -170,7 +209,7 @@ class CharactersStore {
 
         try {
             const nextPage = this.currentPage + 1;
-            const response = await fetch(this.buildApiUrl(nextPage));
+            const response = await this.fetchWithRetry(this.buildApiUrl(nextPage));
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -209,7 +248,7 @@ class CharactersStore {
         if (cachedCharacter) return cachedCharacter;
 
         try {
-            const response = await fetch(`${BASE_API_URL}${id}`);
+            const response = await this.fetchWithRetry(`${BASE_API_URL}${id}`);
 
             if (!response.ok) {
                 const errorMessage = response.status === 404 
