@@ -115,6 +115,7 @@ import { useEffect } from 'react';
 import { useCharactersStore } from '../stores/StoreContext';
 import Filter from "../components/Filter/Filter";
 import CharactersCards from "../components/CharactersCards/CharactersCards";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const CharactersPage = observer(() => {
     const charactersStore = useCharactersStore();
@@ -177,7 +178,7 @@ const CharactersPage = observer(() => {
 
                         {/* Loading spinner for initial load */}
                         {charactersStore.loading && charactersStore.charactersList.length === 0 && (
-                            <div className={`${styles.loadingSpinner} row mt-3`}>
+                            <div className={`${styles.loadingSpinner} col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4"`}>
                                 <div className="col-12 text-center">
                                     <div className="spinner-border" role="status">
                                         <span className="visually-hidden">Loading...</span>
