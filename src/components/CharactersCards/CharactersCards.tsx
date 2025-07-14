@@ -1,8 +1,9 @@
 import styles from './CharactersCards.module.scss'
+import { useNavigate } from 'react-router-dom';
+    
 
 
-
-interface Character {
+export interface Character {
     id: number;
     name: string;
     status: string;
@@ -24,20 +25,32 @@ interface Character {
 }
 
 const CharactersCards = ({ characters = [] }: { characters: Character[] }) => {
-    console.log("CharactersCards props:", characters);
+    const navigate = useNavigate();
     let display;
+    let badgeColor;
 
     if (characters) {
         display = characters.map(character => {
+            if(character.status === "Alive") {
+                badgeColor = "bg-success";
+            } else if (character.status === "Dead") {
+                badgeColor = "bg-danger";
+            } else {
+                badgeColor = "bg-secondary";
+            }
             return (
                 <div className={"col-3 position-relative"} key={character.id}>
-                    <div className={styles.card}>
+                    <div 
+                        className={`${styles.card}`}
+                        onClick={() => navigate(`/character/${character.id}`)}
+                        style={{ cursor: 'pointer' }}
+                    >
                         <img src={character.image} className="img-fluid" alt={character.name} />
-                        <div className="content">
+                        <div className="">
                             <h5 className="fs-4 mb-4">{character.name}</h5>
                             <div>
                                 <p className="fs-6">Last Known: {character.location.name}</p>
-                                <p className={`${styles.badge} position-absolute badge bg-danger`}> {character.status}</p>
+                                <p className={`${styles.badge} position-absolute badge ${badgeColor}`}> {character.status}</p>
                             </div>
                         </div>
                     </div>
