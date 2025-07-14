@@ -267,8 +267,7 @@ class CharactersStore {
 
     async getNextCharacterIdWithPrefetch(currentId: number): Promise<number | null> {
         const currentIndex = this.charactersList.indexOf(currentId);
-        
-        if (currentIndex === -1) return null;
+        if (currentIndex === -1) return null; // not found
         
         // Return next character if available
         if (currentIndex < this.charactersList.length - 1) {

@@ -40,7 +40,7 @@ const CharacterDetailPage = observer(() => {
         
         try {
             setNavigatingNext(true);
-            // Use the smart navigation method that can load more data if needed
+            // this navigation method can load more data if needed
             const nextId = await charactersStore.getNextCharacterIdWithPrefetch(currentCharacterId);
             if (nextId) {
                 navigate(`/character/${nextId}`);
