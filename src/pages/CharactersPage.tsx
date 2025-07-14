@@ -28,10 +28,11 @@ const CharactersPage = observer(() => {
             <div className="container">
                 <div className="row">
                     <div className="col-3">
-                        <h1 className="text-left mt-2 mb-2 fs-2">My
-                            <span className="text-primary"> Rick & Morty </span>
+                        <h1 className="text-left mt-2 mb-2 fs-4">
+                            <span className="text-primary fs-1"> Rick & Morty </span>
                             Character Catalog
                         </h1>
+                        <hr />
                         <Filter />
                     </div>
                     <div className="col-9 mt-2">
