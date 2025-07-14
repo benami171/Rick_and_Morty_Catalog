@@ -12,6 +12,45 @@ const CharacterDetailPage = observer(() => {
     const [character, setCharacter] = useState<Character | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [navigatingNext, setNavigatingNext] = useState(false);
+
+    // Get current character ID as number
+    const currentCharacterId = id ? parseInt(id) : null;
+    
+    // Get previous character ID
+    const previousCharacterId = currentCharacterId ? charactersStore.getPreviousCharacterId(currentCharacterId) : null;
+    
+    // Check if we can navigate (including potential future loads)
+    const canNavigatePrevious = previousCharacterId !== null;
+    const canNavigateNext = currentCharacterId ? charactersStore.canNavigateNext(currentCharacterId) : false;
+    
+    // Get current position for display
+    const currentIndex = currentCharacterId ? charactersStore.getCurrentCharacterIndex(currentCharacterId) : -1;
+    const totalCharacters = charactersStore.charactersList.length;
+
+    // Navigation functions
+    const goToPreviousCharacter = () => {
+        if (previousCharacterId) {
+            navigate(`/character/${previousCharacterId}`);
+        }
+    };
+
+    const goToNextCharacter = async () => {
+        if (!currentCharacterId) return;
+        
+        try {
+            setNavigatingNext(true);
+            // Use the smart navigation method that can load more data if needed
+            const nextId = await charactersStore.getNextCharacterIdWithPrefetch(currentCharacterId);
+            if (nextId) {
+                navigate(`/character/${nextId}`);
+            }
+        } catch (error) {
+            console.error("Error navigating to next character:", error);
+        } finally {
+            setNavigatingNext(false);
+        }
+    };
 
     useEffect(() => {
         const fetchCharacter = async () => {
@@ -34,6 +73,7 @@ const CharacterDetailPage = observer(() => {
 
                 // If not in cache, fetch from API
                 console.log("Character not in cache, fetching from API...");
+        
                 const fetchedCharacter = await charactersStore.fetchCharacterById(characterId);
                 setCharacter(fetchedCharacter);
 
@@ -84,12 +124,55 @@ const CharacterDetailPage = observer(() => {
 
     return (
         <div className="container mt-4">
-            <button
-                className="btn btn-secondary mb-3"
-                onClick={() => navigate('/')}
-            >
-                ← Back to Characters
-            </button>
+            {/* Navigation Controls */}
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => navigate('/')}
+                >
+                    ← Back to Characters
+                </button>
+
+                {/* Character Navigation */}
+                {charactersStore.charactersList.length > 1 && (
+                    <div className="d-flex align-items-center">
+                        <span className="me-3 text-muted">
+                            {currentIndex >= 0 ? (
+                                `Character ${currentIndex + 1} of ${charactersStore.totalCharacters > 0 ? charactersStore.totalCharacters : totalCharacters}`
+                            ) : (
+                                `Character ${currentCharacterId} of ${charactersStore.totalCharacters > 0 ? charactersStore.totalCharacters : '826'}`
+                            )}
+                        </span>
+                        <div className="btn-group" role="group" aria-label="Character navigation">
+                            <button
+                                type="button"
+                                className="btn btn-outline-primary"
+                                onClick={goToPreviousCharacter}
+                                disabled={!canNavigatePrevious}
+                                title="Previous Character"
+                            >
+                                ← Previous
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-outline-primary"
+                                onClick={goToNextCharacter}
+                                disabled={!canNavigateNext || navigatingNext}
+                                title="Next Character"
+                            >
+                                {navigatingNext ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Loading...
+                                    </>
+                                ) : (
+                                    "Next →"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             <div className="row">
                 <div className="col-md-4">
