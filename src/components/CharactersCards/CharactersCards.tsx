@@ -1,28 +1,7 @@
 import styles from './CharactersCards.module.scss'
 import { useNavigate } from 'react-router-dom';
+import { type Character } from '../../stores/CharacterStores';
 
-
-
-export interface Character {
-    id: number;
-    name: string;
-    status: string;
-    species: string;
-    type?: string | "<unknown>";
-    gender: string;
-    origin: {
-        name: string;
-        url: string;
-    };
-    location: {
-        name: string;
-        url: string;
-    };
-    image: string;
-    episode: string[];
-    url: string;
-    created: string;
-}
 const badgeColorSetter = (status: string) => {
     switch (status) {
         case "Alive":
@@ -34,7 +13,7 @@ const badgeColorSetter = (status: string) => {
     }
 }
 
-const CharactersCards = ({ characters = [] }: { characters: Character[] }) => {
+const CharactersCards = ({ characters }: { characters: Character[] }) => {
     const navigate = useNavigate();
     let display;
     let badgeColor;

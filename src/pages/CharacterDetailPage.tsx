@@ -1,44 +1,56 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { type Character } from "../components/CharactersCards/CharactersCards";
+import { observer } from 'mobx-react-lite';
+import { useCharactersStore } from '../stores/StoreContext';
+import { type Character } from "../stores/CharacterStores";
 
-function CharacterDetailPage() {
+const CharacterDetailPage = observer(() => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const charactersStore = useCharactersStore();
+    
     const [character, setCharacter] = useState<Character | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchCharacter = async () => {
+            if (!id) return;
+
+            const characterId = parseInt(id);
+            
             try {
                 setLoading(true);
-                const response = await fetch(`https://rickandmortyapi.com/api/character/${id}`);
+                setError(null);
 
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        setError("Character not found");
-                    } else {
-                        throw new Error("Network response was not ok");
-                    }
+                // Try to get from cache first
+                const cachedCharacter = charactersStore.getCachedCharacter(characterId);
+                if (cachedCharacter) {
+                    console.log("Character loaded from cache:", cachedCharacter);
+                    setCharacter(cachedCharacter);
+                    setLoading(false);
                     return;
                 }
 
-                const data = await response.json();
-                console.log("Character data:", data);
-                setCharacter(data);
+                // If not in cache, fetch from API
+                console.log("Character not in cache, fetching from API...");
+                const fetchedCharacter = await charactersStore.fetchCharacterById(characterId);
+                setCharacter(fetchedCharacter);
+
             } catch (error) {
                 console.error("Error fetching character:", error);
-                setError("Failed to load character");
+                if (error instanceof Error) {
+                    setError(error.message);
+                } else {
+                    setError("Failed to load character");
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        if (id) {
-            fetchCharacter();
-        }
-    }, [id]);
+        fetchCharacter();
+    }, [id, charactersStore]);
 
     if (loading) {
         return (
@@ -47,6 +59,7 @@ function CharacterDetailPage() {
                     <div className="spinner-border" role="status">
                         <span className="visually-hidden">Loading...</span>
                     </div>
+                    <p className="mt-2">Loading character details...</p>
                 </div>
             </div>
         );
@@ -68,7 +81,6 @@ function CharacterDetailPage() {
             </div>
         );
     }
-    document.title = `${character.name} - Rick & Morty Catalog`;
 
     return (
         <div className="container mt-4">
@@ -127,11 +139,10 @@ function CharacterDetailPage() {
                     ) : (
                         <p>No episodes found for this character.</p>
                     )}
-
                 </div>
             </div>
         </div>
     );
-}
+});
 
 export default CharacterDetailPage;
