@@ -23,6 +23,16 @@ export interface Character {
     url: string;
     created: string;
 }
+const badgeColorSetter =(status: string) => {
+    switch (status) {
+        case "Alive":
+            return "bg-success";
+        case "Dead":
+            return "bg-danger";
+        default:
+            return "bg-secondary";
+    }
+}
 
 const CharactersCards = ({ characters = [] }: { characters: Character[] }) => {
     const navigate = useNavigate();
@@ -31,15 +41,9 @@ const CharactersCards = ({ characters = [] }: { characters: Character[] }) => {
 
     if (characters) {
         display = characters.map(character => {
-            if(character.status === "Alive") {
-                badgeColor = "bg-success";
-            } else if (character.status === "Dead") {
-                badgeColor = "bg-danger";
-            } else {
-                badgeColor = "bg-secondary";
-            }
+            badgeColor = badgeColorSetter(character.status);
             return (
-                <div className={"col-3 position-relative"} key={character.id}>
+                <div className={"col-3 position-relative mb-3"} key={character.id}>
                     <div 
                         className={`${styles.card}`}
                         onClick={() => navigate(`/character/${character.id}`)}
