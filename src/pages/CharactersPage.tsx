@@ -64,6 +64,8 @@ function CharactersPage() {
         }
     };
 
+    document.title = "Rick & Morty Catalog";
+
     return (
         <div className="CharactersPage">
             <div className="container">

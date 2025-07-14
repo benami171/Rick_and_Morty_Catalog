@@ -1,6 +1,6 @@
 import styles from './CharactersCards.module.scss'
 import { useNavigate } from 'react-router-dom';
-    
+
 
 
 export interface Character {
@@ -19,11 +19,11 @@ export interface Character {
         url: string;
     };
     image: string;
-    episodes: string[];
+    episode: string[];
     url: string;
     created: string;
 }
-const badgeColorSetter =(status: string) => {
+const badgeColorSetter = (status: string) => {
     switch (status) {
         case "Alive":
             return "bg-success";
@@ -44,7 +44,7 @@ const CharactersCards = ({ characters = [] }: { characters: Character[] }) => {
             badgeColor = badgeColorSetter(character.status);
             return (
                 <div className={"col-3 position-relative mb-3"} key={character.id}>
-                    <div 
+                    <div
                         className={`${styles.card}`}
                         onClick={() => navigate(`/character/${character.id}`)}
                         style={{ cursor: 'pointer' }}
