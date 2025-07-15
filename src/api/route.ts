@@ -1,4 +1,4 @@
-import type { ApiResponse, ApiInfo, CharacterFilters, Character } from '../types/types';
+import type { ApiResponse, CharacterFilters } from '../types/types';
 
 const BASE_API_URL = 'https://rickandmortyapi.com/api/character';
 
@@ -105,88 +105,5 @@ export async function fetchCharactersPage(
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to fetch characters";
         throw new Error(`Failed to fetch characters page ${page}: ${message}`);
-    }
-}
-
-// /**
-//  * Fetch a single character by ID
-//  * @param id - Character ID
-//  * @returns Promise<Character> - Character data
-//  */
-// export async function fetchCharacterById(id: number): Promise<Character> {
-//     const url = `${BASE_API_URL}/${id}`;
-    
-//     try {
-//         const response = await fetchWithRetry(url);
-
-//         if (!response.ok) {
-//             const errorMessage = response.status === 404 
-//                 ? "Character not found" 
-//                 : `HTTP ${response.status}: ${response.statusText}`;
-//             throw new Error(errorMessage);
-//         }
-
-//         const character: Character = await response.json();
-//         return character;
-
-//     } catch (error) {
-//         const message = error instanceof Error ? error.message : "Failed to fetch character";
-//         throw new Error(`Failed to fetch character ${id}: ${message}`);
-//     }
-// }
-
-/**
- * Fetch multiple characters by IDs (batch request)
- * @param ids - Array of character IDs
- * @returns Promise<Character[]> - Array of characters
- */
-export async function fetchCharactersByIds(ids: number[]): Promise<Character[]> {
-    if (ids.length === 0) return [];
-    
-    // API supports fetching multiple characters: /character/1,2,3
-    const url = `${BASE_API_URL}/${ids.join(',')}`;
-    
-    try {
-        const response = await fetchWithRetry(url);
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        // API returns single character object for one ID, array for multiple
-        const data = await response.json();
-        return Array.isArray(data) ? data : [data];
-
-    } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to fetch characters";
-        throw new Error(`Failed to fetch characters ${ids.join(',')}: ${message}`);
-    }
-}
-
-// ===== UTILITY FUNCTIONS =====
-
-/**
- * Check if there are more pages available
- * @param apiInfo - API pagination info
- * @returns boolean - True if more pages exist
- */
-export function hasMorePages(apiInfo: ApiInfo | null): boolean {
-    return apiInfo?.next !== null;
-}
-
-/**
- * Extract page number from API next/prev URL
- * @param url - API pagination URL
- * @returns number | null - Page number or null if invalid
- */
-export function extractPageFromUrl(url: string | null): number | null {
-    if (!url) return null;
-    
-    try {
-        const urlObj = new URL(url);
-        const page = urlObj.searchParams.get('page');
-        return page ? parseInt(page, 10) : null;
-    } catch {
-        return null;
     }
 }
