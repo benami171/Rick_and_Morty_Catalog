@@ -59,8 +59,10 @@ const CharactersPage = observer(() => {
         }
     }, [charactersStore]);
 
+    // Extract virtual items to a separate variable for dependency array
+    const virtualItems = virtualizer.getVirtualItems();
+
     useEffect(() => {
-        const virtualItems = virtualizer.getVirtualItems();
         const [lastItem] = [...virtualItems].reverse();
 
         if (!lastItem) return;
@@ -73,10 +75,11 @@ const CharactersPage = observer(() => {
             charactersStore.fetchCharacters(charactersStore.nextPage);
         }
     }, [
-        virtualizer.getVirtualItems(), // Re-run when visible items change
+        virtualItems, // Use the extracted variable instead of the function call
         allItems.length,
         charactersStore.hasNextPage,
-        charactersStore
+        charactersStore,
+        virtualizer // Add the missing virtualizer dependency
     ]);
 
     return (
