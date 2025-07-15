@@ -123,13 +123,13 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     
     &.alive {
-        background: linear-gradient(135deg, #00ff88, #00cc66);
-        color: #000;
+        background: linear-gradient(135deg, #00de76, #00ad56);
+        color: #ebeaea;
     }
     
     &.dead {
         background: linear-gradient(135deg, #ff4444, #cc0000);
-        color: #fff;
+        color: #ebeaea;
     }
     
     &.unknown {

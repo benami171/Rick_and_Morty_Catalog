@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import './App.module.scss'
 import { Routes, Route } from 'react-router-dom';
-import { StoreProvider } from './stores/StoreContext';
+import { StoreProvider } from './stores/CharacterStore/StoreContext';
 import CharactersPage from './pages/CharactersPage';
 import CharacterDetailPage from './pages/CharacterDetailPage';
 import NotFoundPage from './pages/NotFoundPage';

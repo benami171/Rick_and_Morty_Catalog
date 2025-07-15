@@ -3,11 +3,11 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import styles from '../App.module.scss'
 import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useRef } from 'react';
-import { useCharactersStore } from '../stores/StoreContext';
+import { useCharactersStore } from '../stores/CharacterStore/StoreHooks';
 import Filter from "../components/Filter/Filter";
 import CharactersCards from "../components/CharactersCards/CharactersCards";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { type Character } from '../stores/CharacterStores';
+import { type Character } from '../stores/CharacterStore/CharacterStore';
 
 const CharactersPage = observer(() => {
 
@@ -17,8 +17,6 @@ const CharactersPage = observer(() => {
         const characters = charactersStore.displayCharacters;
         const rows = [];
         const charactersPerRow = 4;
-
-
         for (let i = 0; i < characters.length; i += charactersPerRow) {
             rows.push(characters.slice(i, i + charactersPerRow));
         }
@@ -36,7 +34,7 @@ const CharactersPage = observer(() => {
             index
         }));
 
-        if (charactersStore.loadingMore || charactersStore.hasNextPage) {
+        if (charactersStore.hasNextPage) {
             items.push({
                 type: 'loading',
                 data: null,
@@ -45,7 +43,7 @@ const CharactersPage = observer(() => {
         }
 
         return items;
-    }, [characterRows, charactersStore.loadingMore, charactersStore.hasNextPage]);
+    }, [characterRows, charactersStore.hasNextPage]);
 
 
     const virtualizer = useVirtualizer({
@@ -62,23 +60,22 @@ const CharactersPage = observer(() => {
     }, [charactersStore]);
 
     useEffect(() => {
-        const [lastItem] = [...virtualizer.getVirtualItems()].reverse();
+        const virtualItems = virtualizer.getVirtualItems();
+        const [lastItem] = [...virtualItems].reverse();
 
         if (!lastItem) return;
 
         // When we reach the last item and there are more pages, load more
         if (
             lastItem.index >= allItems.length - 1 &&
-            charactersStore.hasNextPage &&
-            !charactersStore.loadingMore
+            charactersStore.hasNextPage
         ) {
-            charactersStore.loadMoreCharacters();
+            charactersStore.fetchCharacters(charactersStore.nextPage);
         }
     }, [
         virtualizer.getVirtualItems(), // Re-run when visible items change
         allItems.length,
         charactersStore.hasNextPage,
-        charactersStore.loadingMore,
         charactersStore
     ]);
 
@@ -145,29 +142,9 @@ const CharactersPage = observer(() => {
                                                     transform: `translateY(${virtualItem.start}px)`, // Position each item
                                                 }}
                                             >
-                                                {item.type === 'row' ? (
-                                                    <div className="row p-2">
-                                                        <CharactersCards characters={item.data || []} />
-                                                    </div>
-                                                ) : (
-                                                    // Loading state
-                                                    <div className="row mt-3">
-                                                        <div className="col-12 text-center">
-                                                            {charactersStore.loadingMore ? (
-                                                                <>
-                                                                    <div className="spinner-border" role="status">
-                                                                        <span className="visually-hidden">Loading...</span>
-                                                                    </div>
-                                                                    <p className="mt-2">Loading more characters...</p>
-                                                                </>
-                                                            ) : charactersStore.hasNextPage ? (
-                                                                <p className="text-muted">Scroll to load more...</p>
-                                                            ) : (
-                                                                <p className="text-muted">No more characters to load</p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                <div className="row p-2">
+                                                    <CharactersCards characters={item.data || []} />
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -200,7 +177,6 @@ const CharactersPage = observer(() => {
                             </div>
                         )}
 
-                        {/* Load More button section */}
                         {charactersStore.charactersList.length > 0 && (
                             <div className={`${styles.loadMoreSection} row mt-3`}>
                                 <div className="col-12 text-center">

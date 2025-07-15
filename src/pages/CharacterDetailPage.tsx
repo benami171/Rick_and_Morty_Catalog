@@ -1,100 +1,146 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { observer } from 'mobx-react-lite';
-import { useCharactersStore } from '../stores/StoreContext';
-import { type Character } from "../stores/CharacterStores";
+import { useCharactersStore } from '../stores/CharacterStore/StoreHooks';
+import { type Character } from "../stores/CharacterStore/CharacterStore";
 import styles from './CharacterDetailsPage.module.scss';
 
 const CharacterDetailPage = observer(() => {
-    const { id } = useParams<{ id: string }>();         // Get character ID from URL params
-    const navigate = useNavigate();                     // i will use it to navigate back to the catalog.
-    const charactersStore = useCharactersStore();       // use the store to access global states and methods and to subscribe to changes.
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const charactersStore = useCharactersStore();
 
+    // === CHARACTER STATE ===
     const [character, setCharacter] = useState<Character | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [isLoadingCharacter, setIsLoadingCharacter] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [navigatingNext, setNavigatingNext] = useState(false);
+    
+    // === URL VALIDATION ===
+    const parseCharacterId = (idParam: string | undefined): number | null => {
+        if (!idParam) return null;
+        
+        // Trim whitespace and check for non-numeric characters
+        const trimmed = idParam.trim();
+        
+        // Check if it contains only digits (and optional leading/trailing whitespace)
+        if (!/^\s*\d+\s*$/.test(trimmed)) {return null;}
+        
+        const parsed = parseInt(trimmed, 10);
+        // Check if parsing resulted in valid character ID range
+        if (isNaN(parsed) || parsed < 1 || parsed > 826) {return null;}
+        
+        return parsed;
+    };
+
+    // Early return for invalid character IDs - redirect to 404
+    const currentCharacterId = parseCharacterId(id);
+    if (id && currentCharacterId === null) {
+        return <Navigate to="/404" />;
+    }
+    
+    // === NAVIGATION STATE ===
+    const [isNavigating, setIsNavigating] = useState(false);
+    // === UI STATE ===
     const [showAllEpisodes, setShowAllEpisodes] = useState(false);
+    // === NAVIGATION CAPABILITIES ===
+    const canNavigatePrevious = currentCharacterId ? (currentCharacterId > 1) : false;
+    const canNavigateNext = currentCharacterId ? (currentCharacterId < 826) : false;
 
-    // Get current character ID as number
-    const currentCharacterId = id ? parseInt(id) : null;
-    // Get previous character ID - for prev navigation.
-    const previousCharacterId = currentCharacterId ? charactersStore.getPreviousCharacterId(currentCharacterId) : null;
+    // === NAVIGATION FUNCTIONS ===
+    const navigateToPreviousCharacter = async () => {
+        if (!currentCharacterId || !canNavigatePrevious) return;
 
-    // Check if we can navigate (including potential future loads)
-    const canNavigatePrevious = previousCharacterId !== null;
-    const canNavigateNext = currentCharacterId ? charactersStore.canNavigateNext(currentCharacterId) : false;
+        try {
+            setIsNavigating(true);
+            const targetCharacterId = currentCharacterId - 1;
+            
+            // Pre-load the character's page if not cached
 
-    // Get current position for display
-    const currentIndex = currentCharacterId ? charactersStore.getCurrentCharacterIndex(currentCharacterId) : -1;
-    const totalCharacters = charactersStore.charactersList.length;
-
-    // Navigation functions
-    const goToPreviousCharacter = () => {
-        if (previousCharacterId) {
-            navigate(`/character/${previousCharacterId}`);
+            const targetPage = Math.ceil(targetCharacterId / 20);
+            
+            if (!charactersStore.isPageCached(targetPage)) {
+                console.log(`Pre-loading page ${targetPage} for previous character ${targetCharacterId}`);
+                await charactersStore.fetchCharacters(targetPage);
+            }
+            
+            navigate(`/character/${targetCharacterId}`);
+        } catch (error) {
+            console.error("Error navigating to previous character:", error);
+        } finally {
+            setIsNavigating(false);
         }
     };
 
-    const goToNextCharacter = async () => {
-        if (!currentCharacterId) return;
+    const navigateToNextCharacter = async () => {
+        if (!currentCharacterId || !canNavigateNext) return;
 
         try {
-            setNavigatingNext(true);
-            // in case we are on the last character of the current list,
-            // we will prefetch the next page and navigate to following character..
-            const nextId = await charactersStore.getNextCharacterIdWithPrefetch(currentCharacterId);
-            if (nextId) {
-                navigate(`/character/${nextId}`);
+            setIsNavigating(true);
+            const targetCharacterId = currentCharacterId + 1;
+            const targetPage = Math.ceil(targetCharacterId / 20);
+
+            // Pre-load the next character's page if not cached
+            if (!charactersStore.isPageCached(targetPage)) {
+                console.log(`Pre-loading page ${targetPage} for next character ${targetCharacterId}`);
+                await charactersStore.fetchCharacters(targetPage);
             }
+            navigate(`/character/${targetCharacterId}`);
         } catch (error) {
             console.error("Error navigating to next character:", error);
         } finally {
-            setNavigatingNext(false);
+            setIsNavigating(false);
         }
     };
 
+    // === CHARACTER LOADING EFFECT ===
     useEffect(() => {
-        const fetchCharacter = async () => {
-            if (!id) return;
+        const loadCharacter = async () => {
+            // Early validation: Check if ID parameter exists and is valid
+            if (!id) {
+                setError("No character ID provided");
+                setIsLoadingCharacter(false);
+                return;
+            }
 
-            const characterId = parseInt(id);
+            const characterId = parseCharacterId(id);
+            
+            // Handle invalid character ID
+            if (characterId === null) {
+                const errorMsg = isNaN(parseInt(id, 10)) 
+                    ? `Invalid character ID: "${id}". Please provide a valid number.`
+                    : `Character ID ${id} is out of range. Valid range is 1-826.`;
+                setError(errorMsg);
+                setIsLoadingCharacter(false);
+                return;
+            }
 
             try {
-                setLoading(true);
+                setIsLoadingCharacter(true);
                 setError(null);
 
-                // Try to get from cache first
-                const cachedCharacter = charactersStore.getCachedCharacter(characterId);
-                if (cachedCharacter) {
-                    console.log("Character loaded from cache:", cachedCharacter);
-                    setCharacter(cachedCharacter);
-                    setLoading(false);
-                    return;
+                console.log(`Loading the page of character: ${characterId}...`);
+                // this will get the character if it's cached or load it's page if not.
+                const loadedCharacter = await charactersStore.loadPageGetCharacter(characterId);
+                
+                if (loadedCharacter) {
+                    setCharacter(loadedCharacter);
+                } else {
+                    setError(`Character ${characterId} not found`);
                 }
-
-                // If not in cache, fetch from API
-                console.log("Character not in cache, fetching from API...");
-
-                const fetchedCharacter = await charactersStore.fetchCharacterById(characterId);
-                setCharacter(fetchedCharacter);
 
             } catch (error) {
-                console.error("Error fetching character:", error);
-                if (error instanceof Error) {
-                    setError(error.message);
-                } else {
-                    setError("Failed to load character");
-                }
+                console.error("Error loading character:", error);
+                const errorMessage = error instanceof Error ? error.message : "Failed to load character";
+                setError(errorMessage);
             } finally {
-                setLoading(false);
+                setIsLoadingCharacter(false);
             }
         };
 
-        fetchCharacter();
+        loadCharacter();
     }, [id, charactersStore]);
 
-    if (loading) {
+    if (isLoadingCharacter) {
         return (
             <div className="container mt-4">
                 <div className="text-center">
@@ -111,14 +157,23 @@ const CharacterDetailPage = observer(() => {
         return (
             <div className="container mt-4">
                 <div className="alert alert-danger" role="alert">
-                    <h4 className="alert-heading">Error!</h4>
-                    <p>{error || "Character not found"}</p>
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => navigate('/')}
-                    >
-                        Back to Characters
-                    </button>
+                    <h4 className="alert-heading">
+                        {error?.includes("Invalid character ID") || error?.includes("out of range") 
+                            ? "Invalid Character ID" 
+                            : "Character Not Found"}
+                    </h4>
+                    <p className="mb-3">{error || "Character not found"}</p>
+                    
+
+                    
+                    <div className="d-flex gap-2">
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => navigate('/')}
+                        >
+                            ← Back to Characters
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -136,44 +191,31 @@ const CharacterDetailPage = observer(() => {
                 </button>
 
                 {/* Character Navigation */}
-                {charactersStore.charactersList.length > 1 && (
-                    <div className="d-flex align-items-center">
-                        <span className="me-3 text-muted">
-                            {currentIndex >= 0 ? (
-                                `Character ${currentIndex + 1} of ${charactersStore.totalCharacters > 0 ? charactersStore.totalCharacters : totalCharacters}`
-                            ) : (
-                                `Character ${currentCharacterId} of ${charactersStore.totalCharacters > 0 ? charactersStore.totalCharacters : '826'}`
-                            )}
-                        </span>
-                        <div className="btn-group" role="group" aria-label="Character navigation">
-                            <button
-                                type="button"
-                                className="btn btn-outline-success"
-                                onClick={goToPreviousCharacter}
-                                disabled={!canNavigatePrevious}
-                                title="Previous Character"
-                            >
-                                ← Previous
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-outline-success"
-                                onClick={goToNextCharacter}
-                                disabled={!canNavigateNext || navigatingNext}
-                                title="Next Character"
-                            >
-                                {navigatingNext ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Loading...
-                                    </>
-                                ) : (
-                                    "Next →"
-                                )}
-                            </button>
-                        </div>
+                <div className="d-flex align-items-center">
+                    <span className="me-3 text">
+                        {`Character ${currentCharacterId} of 826`}
+                    </span>
+                    <div className="btn-group" role="group" aria-label="Character navigation">
+                        <button
+                            type="button"
+                            className="btn btn-outline-success"
+                            onClick={navigateToPreviousCharacter}
+                            disabled={!canNavigatePrevious || isNavigating}
+                            title="Previous Character"
+                        >
+                            ← Previous
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-outline-success"
+                            onClick={navigateToNextCharacter}
+                            disabled={!canNavigateNext || isNavigating}
+                            title="Next Character"
+                        >
+                            Next →
+                        </button>
                     </div>
-                )}
+                </div>
             </div>
 
             <div className="row">

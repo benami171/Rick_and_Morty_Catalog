@@ -1,4 +1,4 @@
-import type { Character, ApiInfo } from '../stores/CharacterStores';
+import type { Character, ApiInfo } from '../stores/CharacterStore/CharacterStore';
 
 // ===== API TYPES =====
 export interface ApiResponse {
@@ -26,9 +26,7 @@ const RETRY_CONFIG = {
 
 // ===== CORE API UTILITIES =====
 
-/**
- * Enhanced fetch with retry logic for rate limiting
- */
+//Enhanced fetch with retry logic for rate limiting
 async function fetchWithRetry(url: string, attempt = 1): Promise<Response> {
     try {
         const response = await fetch(url);
@@ -68,9 +66,7 @@ async function fetchWithRetry(url: string, attempt = 1): Promise<Response> {
     }
 }
 
-/**
- * Build URL with query parameters for character filtering
- */
+// Build URL with pagination and filters
 function buildCharactersUrl(page: number, filters: CharacterFilters = {}): string {
     const params = new URLSearchParams();
     const { status, species, gender, name } = filters;
@@ -126,32 +122,32 @@ export async function fetchCharactersPage(
     }
 }
 
-/**
- * Fetch a single character by ID
- * @param id - Character ID
- * @returns Promise<Character> - Character data
- */
-export async function fetchCharacterById(id: number): Promise<Character> {
-    const url = `${BASE_API_URL}/${id}`;
+// /**
+//  * Fetch a single character by ID
+//  * @param id - Character ID
+//  * @returns Promise<Character> - Character data
+//  */
+// export async function fetchCharacterById(id: number): Promise<Character> {
+//     const url = `${BASE_API_URL}/${id}`;
     
-    try {
-        const response = await fetchWithRetry(url);
+//     try {
+//         const response = await fetchWithRetry(url);
 
-        if (!response.ok) {
-            const errorMessage = response.status === 404 
-                ? "Character not found" 
-                : `HTTP ${response.status}: ${response.statusText}`;
-            throw new Error(errorMessage);
-        }
+//         if (!response.ok) {
+//             const errorMessage = response.status === 404 
+//                 ? "Character not found" 
+//                 : `HTTP ${response.status}: ${response.statusText}`;
+//             throw new Error(errorMessage);
+//         }
 
-        const character: Character = await response.json();
-        return character;
+//         const character: Character = await response.json();
+//         return character;
 
-    } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to fetch character";
-        throw new Error(`Failed to fetch character ${id}: ${message}`);
-    }
-}
+//     } catch (error) {
+//         const message = error instanceof Error ? error.message : "Failed to fetch character";
+//         throw new Error(`Failed to fetch character ${id}: ${message}`);
+//     }
+// }
 
 /**
  * Fetch multiple characters by IDs (batch request)

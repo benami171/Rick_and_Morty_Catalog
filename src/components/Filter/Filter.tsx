@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useCharactersStore } from '../../stores/StoreContext';
+import { useCharactersStore } from '../../stores/CharacterStore/StoreHooks';
 import styles from './Filter.module.scss';
 
 const Filter = observer(() => {

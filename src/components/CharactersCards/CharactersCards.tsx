@@ -1,6 +1,6 @@
 import styles from './CharactersCards.module.scss'
 import { useNavigate } from 'react-router-dom';
-import { type Character } from '../../stores/CharacterStores';
+import { type Character } from '../../stores/CharacterStore/CharacterStore';
 
 const badgeColorSetter = (status: string) => {
     switch (status) {
