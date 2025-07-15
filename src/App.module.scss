@@ -212,23 +212,6 @@
         line-height: 1.6;
     }
     
-    .btn {
-        background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
-        border: none;
-        color: #1a1a2e;
-        font-weight: 600;
-        padding: 12px 24px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
-            color: #1a1a2e;
-        }
-    }
 }
 
 // Responsive adjustments
@@ -236,10 +219,6 @@
     .CharactersPage {
         padding: 10px 0;
     }
-    
-    // .filterPanel {
-    //     margin-bottom: 20px;
-    // }
     
     .title {
         text-align: center;
@@ -254,10 +233,10 @@
 .virtualScrollContainer {
     border-radius: 12px;
     background: rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(93, 27, 159, 0.3);
+    border: 1px solid rgba(0, 86, 82, 0.3);
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 16px rgba(0, 90, 81, 0.694);
     
-    // Custom scrollbar
     &::-webkit-scrollbar {
         width: 8px;
     }

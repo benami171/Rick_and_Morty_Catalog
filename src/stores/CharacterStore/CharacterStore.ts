@@ -1,43 +1,8 @@
 import { makeAutoObservable, flow } from "mobx";
-import {
-    fetchCharactersPage,
-    // fetchCharacterById as apieFetchCharacterById,
-    type CharacterFilters,
-    type ApiResponse
-} from "../../api/route";
-
-// ===== TYPE DEFINITIONS =====
-export interface Character {
-    id: number;
-    name: string;
-    status: string;
-    species: string;
-    type?: string | "<unknown>";
-    gender: string;
-    origin: {
-        name: string;
-        url: string;
-    };
-    location: {
-        name: string;
-        url: string;
-    };
-    image: string;
-    episode: string[];
-    url: string;
-    created: string;
-}
-
-export interface ApiInfo {
-    count: number;
-    pages: number;
-    next: string | null;
-    prev: string | null;
-}
+import type { CharacterFilters, ApiResponse, Character, ApiInfo} from "../../types/types";
+import { fetchCharactersPage } from "../../api/route";
 
 const INITIAL_PAGE = 1;
-
-
 class CharactersStore {
     // ===== STATES =====
     characters = new Map<number, Character>();     // Cache for individual characters
@@ -157,7 +122,7 @@ class CharactersStore {
                 return cachedCharacter;
             }
 
-        } catch (error) {
+        } catch (error) { 
             console.error(`Error loading character ${characterId}:`, error);
             throw error;
         }

@@ -7,7 +7,7 @@ import { useCharactersStore } from '../stores/CharacterStore/StoreHooks';
 import Filter from "../components/Filter/Filter";
 import CharactersCards from "../components/CharactersCards/CharactersCards";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { type Character } from '../stores/CharacterStore/CharacterStore';
+import type { Character } from "../types/types";
 
 const CharactersPage = observer(() => {
 

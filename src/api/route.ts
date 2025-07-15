@@ -1,19 +1,5 @@
-import type { Character, ApiInfo } from '../stores/CharacterStore/CharacterStore';
+import type { ApiResponse, ApiInfo, CharacterFilters, Character } from '../types/types';
 
-// ===== API TYPES =====
-export interface ApiResponse {
-    info: ApiInfo;
-    results: Character[];
-}
-
-export interface CharacterFilters {
-    status?: string;   // "Alive", "Dead", or "unknown"
-    species?: string;  // "Human", "Alien", etc.
-    gender?: string;   // "Male", "Female", "Genderless"
-    name?: string;     // any string
-}
-
-// ===== API CONSTANTS =====
 const BASE_API_URL = 'https://rickandmortyapi.com/api/character';
 
 // Rate limiting retry configuration

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { observer } from 'mobx-react-lite';
 import { useCharactersStore } from '../stores/CharacterStore/StoreHooks';
-import { type Character } from "../stores/CharacterStore/CharacterStore";
+import type { Character } from "../types/types";
 import styles from './CharacterDetailsPage.module.scss';
 
 const CharacterDetailPage = observer(() => {
