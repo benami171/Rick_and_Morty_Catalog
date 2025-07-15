@@ -54,15 +54,11 @@ const CharacterDetailPage = observer(() => {
             setIsNavigating(true);
             const targetCharacterId = currentCharacterId - 1;
             
-            // Pre-load the character's page if not cached
-
             const targetPage = Math.ceil(targetCharacterId / 20);
-            
             if (!charactersStore.isPageCached(targetPage)) {
-                console.log(`Pre-loading page ${targetPage} for previous character ${targetCharacterId}`);
                 await charactersStore.fetchCharacters(targetPage);
             }
-            
+
             navigate(`/character/${targetCharacterId}`);
         } catch (error) {
             console.error("Error navigating to previous character:", error);
@@ -79,9 +75,7 @@ const CharacterDetailPage = observer(() => {
             const targetCharacterId = currentCharacterId + 1;
             const targetPage = Math.ceil(targetCharacterId / 20);
 
-            // Pre-load the next character's page if not cached
             if (!charactersStore.isPageCached(targetPage)) {
-                console.log(`Pre-loading page ${targetPage} for next character ${targetCharacterId}`);
                 await charactersStore.fetchCharacters(targetPage);
             }
             navigate(`/character/${targetCharacterId}`);
@@ -118,7 +112,6 @@ const CharacterDetailPage = observer(() => {
                 setIsLoadingCharacter(true);
                 setError(null);
 
-                console.log(`Loading the page of character: ${characterId}...`);
                 // this will get the character if it's cached or load it's page if not.
                 const loadedCharacter = await charactersStore.loadPageGetCharacter(characterId);
                 

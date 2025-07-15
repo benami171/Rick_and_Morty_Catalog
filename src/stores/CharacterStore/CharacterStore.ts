@@ -74,9 +74,22 @@ class CharactersStore {
             const data: ApiResponse = yield fetchCharactersPage(pageNumber, this.filters);
             console.log(`Fetched page ${pageNumber} with ${data.results.length} characters`);
 
-            // Cache characters and update state
+            // Cache characters 
             this.cacheCharacters(data.results);
-            this.charactersList.push(...data.results.map(char => char.id));
+            
+            // For direct page loading (like character detail page), replace the list
+            // For sequential loading (like infinite scroll), append to the list
+            if (pageNumber === 1 || this.charactersList.length === 0) {
+                // Starting fresh or loading first page
+                this.charactersList = data.results.map(char => char.id);
+            } else if (pageNumber === this.currentPage + 1) {
+                // Sequential loading - append for infinite scroll
+                this.charactersList.push(...data.results.map(char => char.id));
+            } else {
+                // Direct page access - replace with this page's characters
+                this.charactersList = data.results.map(char => char.id);
+            }
+            
             this.apiInfo = data.info;
             this.currentPage = pageNumber;
             this.nextPage = pageNumber + 1;
@@ -88,7 +101,11 @@ class CharactersStore {
         }
     });
 
-    // ===== PAGE UTILITIES =====        
+    // ===== PAGE UTILITIES =====     
+    isCharacterCached(characterId: number): boolean {
+        return this.characters.has(characterId);
+    }
+       
     isPageCached(page: number): boolean {
         const startId = (page - 1) * 20 + 1;
         const endId = page * 20;
@@ -104,22 +121,21 @@ class CharactersStore {
 
     // Enhanced method for loading a specific character with smart page loading
     loadPageGetCharacter = flow(function* (this: CharactersStore, characterId: number) {
-        // Step 1: Check if already cached
+        
         const cachedCharacter = this.characters.get(characterId);
         if (cachedCharacter) return cachedCharacter;
 
-        // Step 2: Try to load the page containing this character
         const targetPage = Math.ceil(characterId / 20);
-        console.log(`Character ${characterId} should be on page ${targetPage}`);
-
         try {
-            yield this.fetchCharacters(targetPage);
-
-            // Step 3: Check if character is now cached
-            const cachedCharacter = this.characters.get(characterId);
-            if (cachedCharacter) {
-                console.log("Character loaded from page cache:", cachedCharacter.name);
-                return cachedCharacter;
+            // Use a dedicated method that only caches characters without updating the main list
+            const data: ApiResponse = yield fetchCharactersPage(targetPage, this.filters);
+            
+            this.cacheCharacters(data.results);
+            const requestedCharacter = this.characters.get(characterId);
+            if (requestedCharacter) {
+                return requestedCharacter;
+            } else {
+                return null;
             }
 
         } catch (error) { 
