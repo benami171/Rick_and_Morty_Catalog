@@ -1,4 +1,11 @@
 import { makeAutoObservable, runInAction } from "mobx";
+import { 
+    fetchCharactersPage, 
+    fetchCharacterById as apieFetchCharacterById, 
+    hasMorePages,
+    type CharacterFilters,
+    type ApiResponse 
+} from "../api/route";
 
 // ===== TYPE DEFINITIONS =====
 export interface Character {
@@ -22,11 +29,6 @@ export interface Character {
     created: string;
 }
 
-interface ApiResponse {
-    info: ApiInfo;
-    results: Character[];
-}
-
 export interface ApiInfo {
     count: number;
     pages: number;
@@ -34,26 +36,8 @@ export interface ApiInfo {
     prev: string | null;
 }
 
-
-interface CharacterFilters {
-    status?: string;   // "Alive", "Dead", or "unknown"
-    species?: string;  // "Human", "Alien", etc.
-    gender?: string;   // "Male", "Female", "Genderless"
-    name?: string;     // any string
-}
-
 // ===== CONSTANTS =====
-
-const BASE_API_URL = 'https://rickandmortyapi.com/api/character/';
 const INITIAL_PAGE = 1;
-
-// Rate limiting retry configuration
-const RETRY_CONFIG = {
-    MAX_ATTEMPTS: 3,
-    INITIAL_DELAY: 1000, // 1 second
-    BACKOFF_MULTIPLIER: 2, // exponential backoff: 1s, 2s, 4s
-    MAX_DELAY: 10000, // 10 seconds max
-};
 
 // ===== CHARACTERS STORE =====
 
@@ -76,7 +60,7 @@ class CharactersStore {
 
     // ===== COMPUTED PROPERTIES =====
     get hasNextPage(): boolean {
-        return this.apiInfo?.next !== null;
+        return hasMorePages(this.apiInfo);
     }
 
     get displayCharacters(): Character[] {
@@ -102,50 +86,6 @@ class CharactersStore {
     }
 
     // ===== PRIVATE HELPERS =====
-    private buildApiUrl(page: number = INITIAL_PAGE): string {
-        const params = new URLSearchParams();
-        const { status, species, gender, name } = this.filters;
-
-        if (status) params.append('status', status);
-        if (species) params.append('species', species);
-        if (gender) params.append('gender', gender);
-        if (name) params.append('name', name);
-
-        const baseUrl = `${BASE_API_URL}?page=${page}`;
-        const paramString = params.toString();
-        return paramString ? `${baseUrl}&${paramString}` : baseUrl;
-    }
-
-    private async fetchWithRetry(url: string, attempt = 1): Promise<Response> {
-        try {
-            const response = await fetch(url);
-
-            // Handle rate limiting (429) with retry logic
-            if (response.status === 429) {
-                if (attempt >= RETRY_CONFIG.MAX_ATTEMPTS) {
-                    throw new Error(`Rate limit exceeded. Please try again later.`);
-                }
-
-                // Calculate delay with exponential backoff
-                const baseDelay = RETRY_CONFIG.INITIAL_DELAY * Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, attempt - 1);
-                const delay = Math.min(baseDelay, RETRY_CONFIG.MAX_DELAY);
-
-                // Try to get Retry-After header if provided by API
-                const retryAfter = response.headers.get('Retry-After');
-                const finalDelay = retryAfter ? parseInt(retryAfter) * 1000 : delay;
-
-                console.warn(`Rate limited (429). Retrying in ${finalDelay}ms (attempt ${attempt}/${RETRY_CONFIG.MAX_ATTEMPTS})`);
-                
-                await new Promise(resolve => setTimeout(resolve, finalDelay));
-                return this.fetchWithRetry(url, attempt + 1);
-            }
-
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    }
-
     private cacheCharacters(characters: Character[]): void {
         characters.forEach(character => {
             this.characters.set(character.id, character);
@@ -182,25 +122,7 @@ class CharactersStore {
         this.setError(null);
 
         try {
-            const response = await this.fetchWithRetry(this.buildApiUrl(INITIAL_PAGE));
-
-            if (!response.ok) {
-                // Handle 404 specifically for "no results found"
-                if (response.status === 404) {
-                    runInAction(() => {
-                        this.charactersList = [];
-                        this.apiInfo = { count: 0, pages: 0, next: null, prev: null };
-                        this.currentPage = INITIAL_PAGE;
-                        // Don't set error for no results - just empty state
-                    });
-                    return;
-                }
-                
-                // Handle other HTTP errors
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data: ApiResponse = await response.json();
+            const data: ApiResponse = await fetchCharactersPage(INITIAL_PAGE, this.filters);
 
             //runInAction to batch state updates and avoid multiple re-renders
             runInAction(() => { 
@@ -229,24 +151,7 @@ class CharactersStore {
 
         try {
             const nextPage = this.currentPage + 1;
-            const response = await this.fetchWithRetry(this.buildApiUrl(nextPage));
-
-            if (!response.ok) {
-                // Handle 404 for no more results
-                if (response.status === 404) {
-                    runInAction(() => {
-                        // Mark as no more pages available
-                        if (this.apiInfo) {
-                            this.apiInfo.next = null;
-                        }
-                    });
-                    return;
-                }
-                
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data: ApiResponse = await response.json();
+            const data: ApiResponse = await fetchCharactersPage(nextPage, this.filters);
 
             runInAction(() => {
                 // Cache new characters
@@ -279,16 +184,7 @@ class CharactersStore {
         if (cachedCharacter) return cachedCharacter;
 
         try {
-            const response = await this.fetchWithRetry(`${BASE_API_URL}${id}`);
-
-            if (!response.ok) {
-                const errorMessage = response.status === 404 
-                    ? "Character not found" 
-                    : `HTTP ${response.status}: ${response.statusText}`;
-                throw new Error(errorMessage);
-            }
-
-            const character: Character = await response.json();
+            const character: Character = await apieFetchCharacterById(id);
 
             runInAction(() => {
                 // Cache the character
