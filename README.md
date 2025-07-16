@@ -1,177 +1,325 @@
 # Rick & Morty Character Catalog
 
-A modern React TypeScript application showcasing state management, caching, filtering, and navigation patterns using MobX, and the Rick & Morty API.
+A modern React TypeScript application built with Vite, featuring advanced state management, virtual scrolling, smart caching, and comprehensive filtering using the Rick & Morty API.
 
-## Architecture Overview
+## Features
 
-This project demonstrates production-ready patterns for:
-- **MobX State Management** with centralized store architecture
-- **Smart Caching & Performance** optimization
-- **Advanced Navigation** with prefetching
-- **Real-time Filtering** with API integration
-- **Type-safe Development** with TypeScript
+- **Virtual Infinite Scrolling** with `@tanstack/react-virtual` for optimal performance
+- **MobX State Management** with centralized store architecture 
+- **Smart Caching System** with page-based character loading
+- **Advanced Character Navigation** with route-based detail views
+- **Real-time Search & Filtering** with debounced API calls
+- **Responsive Design** using Bootstrap 5
+- **TypeScript** for complete type safety
+- **Error Handling** with retry logic and user-friendly messages
 
 ## Project Structure
 
 ```
 src/
+├── api/
+│   └── route.ts                    # API utilities with retry logic
 ├── stores/
-│   ├── CharacterStores.ts      # Main MobX store
-│   └── StoreContext.tsx        # React Context for DI
+│   └── CharacterStore/
+│       ├── CharacterStore.ts       # Main MobX store
+│       ├── StoreContext.tsx        # React Context provider
+│       ├── StoreContextDefinition.ts
+│       └── StoreHooks.ts           # Custom hooks
 ├── pages/
-│   ├── CharactersPage.tsx      # Character catalog with filters
-│   └── CharacterDetailPage.tsx # Individual character view
+│   ├── CharactersPage.tsx          # Main catalog with virtual scrolling
+│   ├── CharacterDetailPage.tsx     # Individual character details
+│   └── NotFoundPage.tsx            # 404 error page
 ├── components/
-│   ├── CharactersCards/        # Character grid display
-│   ├── Filter/                 # Search & filter UI
-│   └── SearchBar/              # Search input component
+│   ├── CharactersCards/            # Character card components
+│   └── Filter/                     # Search & filter components
+├── types/
+│   └── types.ts                    # TypeScript type definitions
+└── assets/                         # Static assets
 ```
 
-## State Management Architecture
+## Architecture Overview
 
 ### MobX Store Pattern
 
-The application uses a centralized MobX store (`CharacterStores.ts`) that manages all character-related state and business logic:
+The application uses a centralized MobX store (`CharacterStore.ts`) that manages all character-related state:
 
 ```typescript
-class CharacterStores {
+class CharactersStore {
     // Observable state
-    @observable charactersList: Character[] = [];
-    @observable loading: boolean = false;
-    @observable currentFilters: FilterParams = {};
+    characters = new Map<number, Character>();     // Efficient character cache
+    charactersList: number[] = [];                // Ordered list for display
+    currentPage = 1;
+    loading = false;
+    filters: CharacterFilters = {};
+    searchTerm = '';
     
     // Computed values
-    @computed get displayCharacters() {
-        return this.charactersList.filter(/* filtering logic */);
+    get displayCharacters(): Character[] {
+        return this.charactersList
+            .map(id => this.characters.get(id))
+            .filter((char): char is Character => char !== undefined);
+    }
+    
+    get hasActiveFilters(): boolean {
+        return !!(this.filters.name || this.filters.status || 
+                 this.filters.species || this.filters.gender);
     }
     
     // Actions
-    @action async fetchCharacters() { /* API calls */ }
-    @action async searchCharacters(query: string) { /* Search logic */ }
+    fetchCharacters = flow(function* (pageNumber = 1) {
+        // API calls with MobX flow for async handling
+    });
 }
 ```
 
 ### Key Design Decisions
 
-1. **Single Source of Truth**: All character data flows through one centralized store
-2. **Computed Properties**: Reactive derived state using `@computed` for efficient re-renders
-3. **Action Batching**: Uses `runInAction` to batch state updates and prevent excessive re-renders
-4. **Type Safety**: Full TypeScript integration with strict typing
+1. **Map-based Character Cache**: Characters stored in `Map<number, Character>` for O(1) lookup
+2. **Computed Properties**: Reactive derived state using MobX computed values
+3. **Flow Actions**: Async operations handled with MobX `flow` for proper state management
+4. **Type Safety**: Complete TypeScript integration with strict typing
+5. **Virtual Scrolling**: `@tanstack/react-virtual` for rendering large lists efficiently
 
 ### Store Context Pattern
 
 Dependency injection through React Context provides clean store access:
 
 ```typescript
-// StoreContext.tsx
+// StoreHooks.ts
 export const useCharactersStore = () => useStores().charactersStore;
 
 // Usage in components
 const CharactersPage = observer(() => {
     const charactersStore = useCharactersStore();
-    // Component logic...
+    // Component automatically re-renders when observable state changes
 });
 ```
 
-## Filtering System
+## 🔍 Performance Optimizations
+
+### Virtual Scrolling Implementation
+
+The main characters page uses virtual scrolling to handle large datasets efficiently:
+
+```typescript
+const virtualizer = useVirtualizer({
+    count: allItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 350, // Row height estimation
+    overscan: 1, // Buffer for smooth scrolling
+});
+
+// Infinite loading when reaching the end
+useEffect(() => {
+    const [lastItem] = [...virtualItems].reverse();
+    if (lastItem?.index >= allItems.length - 1 && charactersStore.hasNextPage) {
+        charactersStore.fetchCharacters(charactersStore.nextPage);
+    }
+}, [virtualItems, allItems.length, charactersStore.hasNextPage]);
+```
+
+### Smart Caching Strategy
+
+1. **Character-level Caching**: Individual characters cached by ID for instant access
+2. **Page-aware Loading**: Characters organized by 20-character pages
+3. **Intelligent Cache Checking**: `isPageCached()` and `isCharacterCached()` methods
+4. **Background Loading**: Load character pages without disrupting UI state
+
+## 🔎 Filtering System
 
 ### Multi-layered Filtering Architecture
 
-The filtering system operates on three levels:
+The filtering system operates on multiple levels:
 
 1. **API-level Filtering**: Server-side filtering via Rick & Morty API parameters
-2. **Client-side Caching**: Intelligent cache management for filtered results
-3. **Real-time UI Updates**: Reactive updates without full page reloads
+2. **Client-side Caching**: Smart cache management for filtered and unfiltered results  
+3. **Debounced Search**: Real-time search with 300ms debounce to prevent excessive API calls
+4. **Filter State Management**: Reactive filter updates with MobX
 
 ### Filter Implementation
 
 ```typescript
-// Store method
-@action async applyFilters(filters: FilterParams) {
-    this.currentFilters = filters;
-    
-    if (this.shouldUseCache(filters)) {
-        // Use cached results for better performance
-        this.displayCharacters = this.getCachedResults(filters);
-    } else {
-        // Fetch fresh data from API
-        await this.fetchCharactersWithFilters(filters);
-    }
-}
+// Debounced search in Filter component
+const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    charactersStore.setSearchTerm(value);
 
-// Component implementation
-const handleFilterChange = async (filterType: string, value: string) => {
-    const newFilters = { ...localFilters, [filterType]: value };
-    await charactersStore.applyFilters(newFilters);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    
+    charactersStore.setSearchPending(value.trim().length > 0);
+    
+    debounceTimer.current = setTimeout(async () => {
+        charactersStore.setSearchPending(false);
+        await charactersStore.applyFilters(charactersStore.currentFilters);
+    }, 300);
 };
+
+// Store filter application
+applyFilters = flow(function* (filters: CharacterFilters) {
+    this.setFilters(filters);
+    yield this.fetchCharacters(); // Reset to page 1 with new filters
+});
 ```
 
-### Performance Optimizations
+### Available Filters
 
-- **Debounced Search**: Prevents excessive API calls during typing
-- **Smart Caching**: Reuses previously fetched results when possible
-- **Incremental Loading**: Maintains pagination state during filtering
+- **Name Search**: Real-time text search with debouncing
+- **Status Filter**: Alive, Dead, Unknown
+- **Species Filter**: Human, Alien, etc.
+- **Gender Filter**: Male, Female, Genderless, Unknown
 
-## Navigation System
+## 🧭 Navigation System
 
 ### Character Detail Navigation
 
-The navigation system provides seamless browsing between characters with smart prefetching:
+The character detail page provides seamless navigation between characters:
 
 ```typescript
-// Navigation methods in store
-@action getNextCharacterIdWithPrefetch(currentId: number): number | null {
-    const nextId = this.getNextCharacterId(currentId);
-    
-    if (nextId && !this.charactersMap.has(nextId)) {
-        // Prefetch character data in background
-        this.fetchCharacterById(nextId);
-    }
-    
-    return nextId;
-}
+// Navigation with smart cache utilization
+const navigateToNextCharacter = async () => {
+    if (!currentCharacterId || !canNavigateNext) return;
 
-// Component usage
-const handleNextCharacter = () => {
-    const nextId = charactersStore.getNextCharacterIdWithPrefetch(character.id);
-    if (nextId) {
-        navigate(`/character/${nextId}`);
+    try {
+        setIsNavigating(true);
+        const targetCharacterId = currentCharacterId + 1;
+        const targetPage = Math.ceil(targetCharacterId / 20);
+
+        // Preload page if not cached
+        if (!charactersStore.isPageCached(targetPage)) {
+            await charactersStore.fetchCharacters(targetPage);
+        }
+        navigate(`/character/${targetCharacterId}`);
+    } catch (error) {
+        console.error("Navigation error:", error);
+    } finally {
+        setIsNavigating(false);
     }
 };
 ```
 
 ### Smart Loading Strategy
 
-1. **Cache-First Approach**: Check local cache before API calls
-2. **Background Prefetching**: Load adjacent characters proactively
-3. **Infinite Scrolling**: Automatic pagination when reaching list boundaries
-4. **Loading States**: Granular loading indicators for better UX
+1. **Cache-First Loading**: Check local cache before making API calls
+2. **Page-aware Navigation**: Load entire character pages (20 characters) for efficiency
+3. **Route Validation**: Invalid character IDs redirect to 404 page
+4. **Loading States**: Visual feedback during navigation and data loading
 
-### Route-level Data Management
+### Route Structure
+
+- `/` - Main characters catalog with filtering and virtual scrolling
+- `/character/:id` - Individual character detail page (IDs 1-826)
+- `/404` - Not found page for invalid routes or character IDs
+- `*` - Catch-all redirect to 404
+
+### Character Loading Method
 
 ```typescript
-// CharacterDetailPage.tsx
-useEffect(() => {
-    const loadCharacter = async () => {
-        // Try cache first, then API
-        let character = charactersStore.getCharacterFromCache(characterId);
-        
-        if (!character) {
-            character = await charactersStore.fetchCharacterById(characterId);
-        }
-        
-        setCurrentCharacter(character);
-    };
-    
-    loadCharacter();
-}, [characterId]);
+// Enhanced character loading with smart page management
+loadPageGetCharacter = flow(function* (characterId: number) {
+    const cachedCharacter = this.characters.get(characterId);
+    if (cachedCharacter) return cachedCharacter;
+
+    const targetPage = Math.ceil(characterId / 20);
+    try {
+        const data: ApiResponse = yield fetchCharactersPage(targetPage, this.filters);
+        this.cacheCharacters(data.results);
+        return this.characters.get(characterId);
+    } catch (error) {
+        console.error(`Error loading character ${characterId}:`, error);
+        throw error;
+    }
+});
 ```
 
-## Key Features & Patterns
+## 🛠️ API Integration
 
-### 1. Observer Pattern Implementation
+### Rick & Morty API
 
-All React components use the `observer` HOC to automatically re-render when observable state changes:
+The application integrates with the [Rick & Morty API](https://rickandmortyapi.com) for character data:
+
+```typescript
+// API utilities with retry logic (api/route.ts)
+async function fetchWithRetry(url: string, attempt = 1): Promise<Response> {
+    try {
+        const response = await fetch(url);
+
+        // Handle rate limiting (429) with exponential backoff
+        if (response.status === 429) {
+            if (attempt >= MAX_ATTEMPTS) {
+                throw new Error('Rate limit exceeded. Please try again later.');
+            }
+
+            const delay = INITIAL_DELAY * Math.pow(BACKOFF_MULTIPLIER, attempt - 1);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(url, attempt + 1);
+        }
+
+        return response;
+    } catch (error) {
+        // Retry on network errors with exponential backoff
+        if (attempt < MAX_ATTEMPTS) {
+            const delay = INITIAL_DELAY * Math.pow(BACKOFF_MULTIPLIER, attempt - 1);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(url, attempt + 1);
+        }
+        throw error;
+    }
+}
+```
+
+### Error Handling
+
+- **Rate Limiting**: Automatic retry with exponential backoff
+- **Network Errors**: Retry mechanism for failed requests
+- **User-Friendly Messages**: Clear error communication in UI
+- **Graceful Degradation**: App remains functional during API issues
+
+## ⚡ Getting Started
+
+### Prerequisites
+```bash
+Node.js 18+
+npm, yarn, or pnpm
+```
+
+### Installation & Development
+```bash
+# Clone the repository
+git clone <repository-url>
+cd homeassignment
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
+```
+
+### Key Dependencies
+
+- **React 19** - Latest React with modern features
+- **TypeScript 5.8** - Static type checking
+- **Vite 7** - Fast build tool and dev server
+- **MobX 6** - Reactive state management
+- **@tanstack/react-virtual** - Virtual scrolling for performance
+- **React Router 7** - Client-side routing
+- **Bootstrap 5** - UI framework and responsive design
+- **Sass** - CSS preprocessing
+
+## 🧪 Key Features & Patterns
+
+### 1. Observer Pattern with MobX
+
+All React components use the `observer` HOC for automatic re-rendering:
 
 ```typescript
 const CharactersPage = observer(() => {
@@ -184,92 +332,87 @@ const CharactersPage = observer(() => {
 });
 ```
 
-### 2. Error Handling Strategy
+### 2. Virtual Scrolling Performance
 
-Centralized error management with user-friendly recovery options:
+Handles large datasets efficiently using `@tanstack/react-virtual`:
 
 ```typescript
-@action async fetchCharacters() {
-    try {
-        this.loading = true;
-        const response = await fetch(/* API call */);
-        // Handle success...
-    } catch (error) {
-        this.error = 'Failed to load characters. Please try again.';
-    } finally {
-        this.loading = false;
-    }
+const virtualizer = useVirtualizer({
+    count: allItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 350, // Estimated row height
+    overscan: 1, // Buffer for smooth scrolling
+});
+```
+
+### 3. Type-Safe Development
+
+Complete TypeScript integration with custom interfaces:
+
+```typescript
+interface Character {
+    id: number;
+    name: string;
+    status: string;
+    species: string;
+    gender: string;
+    origin: { name: string; url: string };
+    location: { name: string; url: string };
+    image: string;
+    episode: string[];
+    // ... additional properties
 }
 ```
 
-### 3. Performance Optimization Techniques
-
-- **Memoized Computed Values**: Expensive calculations cached automatically
-- **Selective Re-rendering**: Only components observing changed state re-render
-- **Background Data Loading**: Non-blocking prefetch operations
-- **Efficient List Rendering**: Optimized character card rendering
-
-## Getting Started
-
-### Prerequisites
-```bash
-Node.js 16+ 
-npm or yarn
-```
-
-### Installation & Setup
-```bash
-# Clone and install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-```
-
-### Key Dependencies
-
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **MobX 6** - State management
-- **React Router** - Client-side routing
-- **Bootstrap 5** - UI components
-- **Vite** - Build tool
-
-## Testing the Architecture
+## 🔍 Testing the Application
 
 ### Testing State Management
 1. Open browser dev tools → Network tab
-2. Navigate between characters to see caching behavior
-3. Apply filters and observe API call patterns
-4. Use browser back/forward to test navigation state
+2. Navigate between characters to observe caching behavior
+3. Apply filters and observe API call patterns with debouncing
+4. Test virtual scrolling performance with large datasets
+5. Use browser back/forward to test navigation state persistence
 
-### Testing Performance
-1. Monitor network requests during filtering
-2. Check re-render frequency with React DevTools
-3. Test navigation speed between character details
-4. Verify prefetching in background network activity
+### Testing Performance Features
+1. **Virtual Scrolling**: Scroll through character list and monitor DOM elements
+2. **Caching**: Navigate to character details and back to see instant loading
+3. **Debounced Search**: Type quickly in search box and observe API call timing
+4. **Filter Performance**: Apply multiple filters and check response times
 
-## Development Notes
+### Testing Error Handling
+1. **Network Issues**: Disable network in dev tools to test retry logic
+2. **Invalid Routes**: Navigate to `/character/999` to test 404 handling
+3. **Rate Limiting**: Rapidly refresh page to test API retry mechanisms
 
-### MobX Best Practices Used
+## 🏗️ Development Notes
 
-1. **Strict Mode**: Enforces action usage for state mutations
-2. **Computed Properties**: Derived state calculations
-3. **Action Batching**: Multiple state changes in single re-render
-4. **Observable Collections**: Efficient array/object tracking
+### MobX Best Practices Implemented
+
+1. **makeAutoObservable**: Simplified store setup without decorators
+2. **Flow Actions**: Proper async operation handling with `flow`
+3. **Computed Properties**: Efficient derived state calculations
+4. **Observer Components**: Automatic re-rendering when observables change
 
 ### Architecture Benefits
 
-- **Predictable State Flow**: Unidirectional data flow
-- **Type Safety**: Compile-time error catching
-- **Performance**: Optimized re-rendering and caching
-- **Maintainability**: Clear separation of concerns
+- **Predictable State Flow**: Centralized state management with MobX
+- **Type Safety**: Compile-time error prevention with TypeScript
+- **Performance**: Virtual scrolling, smart caching, and debounced search
+- **Maintainability**: Clear separation of concerns and modular structure
+- **User Experience**: Responsive design, loading states, and error handling
+
+### File Organization
+
+```
+src/
+├── api/                    # API integration layer
+├── assets/                 # Static assets
+├── components/             # Reusable UI components
+├── pages/                  # Route-level components
+├── stores/                 # MobX state management
+└── types/                  # TypeScript type definitions
+```
 
 ---
 
-*This project demonstrates production-ready patterns for modern React applications with emphasis on performance, maintainability, and developer experience.*
-
----
+*This Rick & Morty Character Catalog demonstrates modern React development patterns with emphasis on performance, type safety, and user experience.*

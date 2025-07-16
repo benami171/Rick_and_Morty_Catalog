@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { observer } from 'mobx-react-lite';
 import { useCharactersStore } from '../stores/CharacterStore/StoreHooks';
 import type { Character } from "../types/types";
@@ -160,12 +160,13 @@ const CharacterDetailPage = observer(() => {
 
                     
                     <div className="d-flex gap-2">
-                        <button
+                        <Link
+                            to="/"
                             className="btn btn-primary"
-                            onClick={() => navigate('/')}
+                            style={{ textDecoration: 'none' }}
                         >
                             ← Back to Characters
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -176,12 +177,13 @@ const CharacterDetailPage = observer(() => {
         <div className="container mt-4">
             {/* Navigation Controls */}
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <button
+                <Link
+                    to="/"
                     className="btn btn-outline-primary"
-                    onClick={() => navigate('/')}
+                    style={{ textDecoration: 'none' }}
                 >
                     ← Back to Characters
-                </button>
+                </Link>
 
                 {/* Character Navigation */}
                 <div className="d-flex align-items-center">

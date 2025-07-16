@@ -13,8 +13,9 @@ function App() {
     <StoreProvider>
       <div className="App">
         <Routes>
-          <Route path="/" element={<CharactersPage />} />
+          <Route index element={<CharactersPage />} />
           <Route path="/character/:id" element={<CharacterDetailPage />} />
+          <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

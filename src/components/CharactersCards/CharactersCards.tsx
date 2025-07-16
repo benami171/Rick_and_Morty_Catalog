@@ -1,5 +1,5 @@
 import styles from './CharactersCards.module.scss'
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { Character } from '../../types/types';
 
 const badgeColorSetter = (status: string) => {
@@ -14,7 +14,6 @@ const badgeColorSetter = (status: string) => {
 }
 
 const CharactersCards = ({ characters }: { characters: Character[] }) => {
-    const navigate = useNavigate();
     let display;
     let badgeColor;
 
@@ -23,10 +22,10 @@ const CharactersCards = ({ characters }: { characters: Character[] }) => {
             badgeColor = badgeColorSetter(character.status);
             return (
                 <div className="col-xl-3" key={character.id}>
-                    <div
+                    <Link 
+                        to={`/character/${character.id}`}
                         className={`${styles.card}`}
-                        onClick={() => navigate(`/character/${character.id}`)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
                     >
                         <img 
                             src={character.image} 
@@ -49,7 +48,7 @@ const CharactersCards = ({ characters }: { characters: Character[] }) => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 </div>
             );
         });

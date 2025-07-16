@@ -13,6 +13,8 @@ class CharactersStore {
     loading = false;
     error: string | null = null;
     filters: CharacterFilters = {};
+    searchTerm = '';
+    isSearchPending = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -47,6 +49,13 @@ class CharactersStore {
 
     get hasActiveFilters(): boolean {
         return !!(this.filters.name || this.filters.status || this.filters.species || this.filters.gender);
+    }
+
+    get currentFilters(): CharacterFilters & { name?: string } {
+        return {
+            ...this.filters,
+            name: this.searchTerm.trim() || undefined
+        };
     }
 
     // ===== PRIVATE HELPERS =====
@@ -145,6 +154,14 @@ class CharactersStore {
     });
 
     // ===== FILTER ACTIONS =====
+    setSearchTerm(term: string): void {
+        this.searchTerm = term;
+    }
+
+    setSearchPending(pending: boolean): void {
+        this.isSearchPending = pending;
+    }
+
     setFilters(filters: CharacterFilters): void {
         this.filters = { ...filters };
         this.resetPagination();
@@ -152,6 +169,8 @@ class CharactersStore {
 
     clearFilters(): void {
         this.filters = {};
+        this.searchTerm = '';
+        this.isSearchPending = false;
         this.resetPagination();
     }
 

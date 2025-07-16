@@ -1,18 +1,11 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCharactersStore } from '../../stores/CharacterStore/StoreHooks';
 import styles from './Filter.module.scss';
 
 const Filter = observer(() => {
     const charactersStore = useCharactersStore();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [localFilters, setLocalFilters] = useState({
-        status: '',
-        species: '',
-        gender: ''
-    });
-    const [isSearchPending, setIsSearchPending] = useState(false);
 
     // Debounce timer ref
     const debounceTimer = useRef<number | null>(null);
@@ -20,7 +13,7 @@ const Filter = observer(() => {
     // Handle search input change with live search
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setSearchTerm(value);
+        charactersStore.setSearchTerm(value);
 
         // Clear existing timer
         if (debounceTimer.current) {
@@ -29,20 +22,17 @@ const Filter = observer(() => {
 
         // Only set pending state if we have text and aren't already pending
         const hasText = value.trim().length > 0;
-        if (hasText && !isSearchPending) {
-            setIsSearchPending(true);
-        } else if (!hasText && isSearchPending) {
-            setIsSearchPending(false);
+        if (hasText && !charactersStore.isSearchPending) {
+            charactersStore.setSearchPending(true);
+        } else if (!hasText && charactersStore.isSearchPending) {
+            charactersStore.setSearchPending(false);
         }
 
         // Set new timer
         debounceTimer.current = setTimeout(async () => {
-            setIsSearchPending(false);
-            // Add name to the current filters
-            await charactersStore.applyFilters({
-                ...localFilters,
-                name: value.trim() || undefined
-            });
+            charactersStore.setSearchPending(false);
+            // Apply filters with the current search term
+            await charactersStore.applyFilters(charactersStore.currentFilters);
         }, 300); // 300ms delay
     };
 
@@ -57,13 +47,12 @@ const Filter = observer(() => {
 
     // Handle filter changes
     const handleFilterChange = async (filterType: string, value: string) => {
-        const newFilters = { ...localFilters, [filterType]: value };
-        setLocalFilters(newFilters);
+        const newFilters = { ...charactersStore.filters, [filterType]: value };
         
         // Apply filters including current search term
         await charactersStore.applyFilters({
             ...newFilters,
-            name: searchTerm.trim() || undefined
+            name: charactersStore.searchTerm.trim() || undefined
         });
     };
 
@@ -74,9 +63,6 @@ const Filter = observer(() => {
             clearTimeout(debounceTimer.current);
         }
         
-        setIsSearchPending(false);
-        setSearchTerm('');
-        setLocalFilters({ status: '', species: '', gender: '' });
         charactersStore.clearFilters();
         await charactersStore.fetchCharacters();
     };
@@ -90,12 +76,12 @@ const Filter = observer(() => {
                 <div className={styles.searchContainer}>
                     <input
                         type="text"
-                        className={`${styles.searchInput} ${searchTerm ? styles.hasValue : ''}`}
+                        className={`${styles.searchInput} ${charactersStore.searchTerm ? styles.hasValue : ''}`}
                         placeholder="Search by name..."
-                        value={searchTerm}
+                        value={charactersStore.searchTerm}
                         onChange={handleSearchChange}
                     />
-                    {isSearchPending && (
+                    {charactersStore.isSearchPending && (
                         <div className={styles.searchIndicator}>⏳ Searching...</div>
                     )}
                 </div>
@@ -105,8 +91,8 @@ const Filter = observer(() => {
                 <div className={styles.filterGroup}>
                     <label className={styles.filterLabel}>Status</label>
                     <select
-                        className={`${styles.filterSelect} ${localFilters.status ? styles.hasValue : ''}`}
-                        value={localFilters.status}
+                        className={`${styles.filterSelect} ${charactersStore.filters.status ? styles.hasValue : ''}`}
+                        value={charactersStore.filters.status || ''}
                         onChange={(e) => handleFilterChange('status', e.target.value)}
                     >
                         <option value="">All Statuses</option>
@@ -120,14 +106,16 @@ const Filter = observer(() => {
                 <div className={styles.filterGroup}>
                     <label className={styles.filterLabel}>Species</label>
                     <select
-                        className={`${styles.filterSelect} ${localFilters.species ? styles.hasValue : ''}`}
-                        value={localFilters.species}
+                        className={`${styles.filterSelect} ${charactersStore.filters.species ? styles.hasValue : ''}`}
+                        value={charactersStore.filters.species || ''}
                         onChange={(e) => handleFilterChange('species', e.target.value)}
                     >
                         <option value="">All Species</option>
                         <option value="Human">👤 Human</option>
                         <option value="Alien">👽 Alien</option>
                         <option value="Humanoid">🤖 Humanoid</option>
+                        <option value="Poopybutthole">💩 Poopybutthole</option>
+                        <option value="Mythological Creature">🦄 Mythological Creature</option>
                         <option value="Robot">⚙️ Robot</option>
                         <option value="Animal">🐾 Animal</option>
                         <option value="Cronenberg">🧬 Cronenberg</option>
@@ -139,8 +127,8 @@ const Filter = observer(() => {
                 <div className={styles.filterGroup}>
                     <label className={styles.filterLabel}>Gender</label>
                     <select
-                        className={`${styles.filterSelect} ${localFilters.gender ? styles.hasValue : ''}`}
-                        value={localFilters.gender}
+                        className={`${styles.filterSelect} ${charactersStore.filters.gender ? styles.hasValue : ''}`}
+                        value={charactersStore.filters.gender || ''}
                         onChange={(e) => handleFilterChange('gender', e.target.value)}
                     >
                         <option value="">All Genders</option>
