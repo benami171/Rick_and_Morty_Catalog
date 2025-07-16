@@ -2,6 +2,17 @@
 
 A modern React TypeScript application built with Vite, featuring advanced state management, virtual scrolling, smart caching, and comprehensive filtering using the Rick & Morty API.
 
+Unfiltered Main Page:
+<img width="2400" height="1200" alt="Image" src="https://github.com/user-attachments/assets/71ee0da1-a2c8-46f6-87af-d6f3a2e2a1be" />
+
+---
+Filtered Main Page:
+<img width="2400" height="1200" alt="Image" src="https://github.com/user-attachments/assets/0de1e6d0-425e-40d8-a65d-e6a05b30438e" />
+
+---
+Detailed Character Page:
+<img width="2400" height="1200" alt="Image" src="https://github.com/user-attachments/assets/c227e97e-4220-4efa-a654-48c3c8851cad" />
+
 ## Features
 
 - **Virtual Infinite Scrolling** with `@tanstack/react-virtual` for optimal performance
