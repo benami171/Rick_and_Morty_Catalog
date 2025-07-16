@@ -95,7 +95,7 @@ const CharactersPage = observer(() => {
 });
 ```
 
-## 🔍 Performance Optimizations
+## Performance Optimizations
 
 ### Virtual Scrolling Implementation
 
@@ -125,7 +125,7 @@ useEffect(() => {
 3. **Intelligent Cache Checking**: `isPageCached()` and `isCharacterCached()` methods
 4. **Background Loading**: Load character pages without disrupting UI state
 
-## 🔎 Filtering System
+## Filtering System
 
 ### Multi-layered Filtering Architecture
 
@@ -168,7 +168,7 @@ applyFilters = flow(function* (filters: CharacterFilters) {
 - **Species Filter**: Human, Alien, etc.
 - **Gender Filter**: Male, Female, Genderless, Unknown
 
-## 🧭 Navigation System
+## Navigation System
 
 ### Character Detail Navigation
 
@@ -231,7 +231,7 @@ loadPageGetCharacter = flow(function* (characterId: number) {
 });
 ```
 
-## 🛠️ API Integration
+## API Integration
 
 ### Rick & Morty API
 
@@ -274,7 +274,7 @@ async function fetchWithRetry(url: string, attempt = 1): Promise<Response> {
 - **User-Friendly Messages**: Clear error communication in UI
 - **Graceful Degradation**: App remains functional during API issues
 
-## ⚡ Getting Started
+## Getting Started
 
 ### Prerequisites
 ```bash
@@ -286,7 +286,7 @@ npm, yarn, or pnpm
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd homeassignment
+cd Rick_and_Morty_Catalog
 
 # Install dependencies
 npm install
@@ -294,14 +294,6 @@ npm install
 # Start development server
 npm run dev
 
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Lint code
-npm run lint
 ```
 
 ### Key Dependencies
@@ -364,14 +356,13 @@ interface Character {
 }
 ```
 
-## 🔍 Testing the Application
+## Testing the Application
 
 ### Testing State Management
 1. Open browser dev tools → Network tab
 2. Navigate between characters to observe caching behavior
-3. Apply filters and observe API call patterns with debouncing
-4. Test virtual scrolling performance with large datasets
-5. Use browser back/forward to test navigation state persistence
+3. Apply Search/filters and observe API call patterns with debouncing
+4. Use browser back/forward to test navigation state persistence
 
 ### Testing Performance Features
 1. **Virtual Scrolling**: Scroll through character list and monitor DOM elements
@@ -380,11 +371,11 @@ interface Character {
 4. **Filter Performance**: Apply multiple filters and check response times
 
 ### Testing Error Handling
-1. **Network Issues**: Disable network in dev tools to test retry logic
-2. **Invalid Routes**: Navigate to `/character/999` to test 404 handling
-3. **Rate Limiting**: Rapidly refresh page to test API retry mechanisms
+1. **Invalid Routes**: Navigate to `/character/999` to test 404 handling
+2. **Null id Route**: Navigate to `/character/` to test null id handling
+3. **Non-number Route**: Navigate to `/character/adfasd` to test non-number route handling
 
-## 🏗️ Development Notes
+## Development Notes
 
 ### MobX Best Practices Implemented
 
@@ -412,7 +403,3 @@ src/
 ├── stores/                 # MobX state management
 └── types/                  # TypeScript type definitions
 ```
-
----
-
-*This Rick & Morty Character Catalog demonstrates modern React development patterns with emphasis on performance, type safety, and user experience.*
